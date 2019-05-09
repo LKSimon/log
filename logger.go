@@ -10,7 +10,6 @@ import (
 
 const (
 	DEFAULT_SPLITTYPE           = SplitType_Size
-	DEFAULT_FORMAT              = TEXT
 	DEFAULT_FILE_SIZE           = 100
 	DEFAULT_FILE_UNIT           = MB
 	DEFAULT_CHECK_FILE_INTERNAL = 1 //默认检查文件时间间隔，单位：秒
@@ -53,14 +52,6 @@ const (
 	OFF
 )
 
-//定义文件格式
-type FORMAT byte
-
-const (
-	TEXT FORMAT = iota
-	JSON
-)
-
 type FileLogger struct {
 	mutex       *sync.Mutex
 	dir         string //日志存放目录
@@ -69,7 +60,6 @@ type FileLogger struct {
 	maxFileSize int64
 	prefix      string
 	splitType   SplitType
-	fileFormat  FORMAT      //默认格式为text
 	logChan     chan string //存放待写入日志信息
 	flag        int         //默认 log.LstdFlags
 	date        time.Time   //用于按照日期分割日志
@@ -89,7 +79,6 @@ func NewDefaultLogger(dir, name string) *FileLogger {
 		maxFileSize: (DEFAULT_FILE_SIZE * int64(DEFAULT_FILE_UNIT)),
 		prefix:      "",
 		splitType:   SplitType_Size,
-		fileFormat:  TEXT,
 		logChan:     make(chan string, DEFAULT_LOG_CHAN_SIZE),
 		flag:        log.LstdFlags,
 		count:       1,
@@ -99,7 +88,7 @@ func NewDefaultLogger(dir, name string) *FileLogger {
 	return &logger
 }
 
-func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT, fileFormat FORMAT) *FileLogger {
+func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT) *FileLogger {
 	logger := FileLogger{
 		mutex:       new(sync.Mutex),
 		dir:         dir,
@@ -108,7 +97,6 @@ func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT
 		maxFileSize: (fileSize * int64(unit)),
 		prefix:      prefix,
 		splitType:   SplitType_Size,
-		fileFormat:  fileFormat,
 		logChan:     make(chan string, chanSize),
 		flag:        log.LstdFlags,
 		count:       1,
@@ -118,16 +106,15 @@ func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT
 	return &logger
 }
 
-func NewDailyLogger(dir, name, prefix string, chanSize int64, fileFormat FORMAT) *FileLogger {
+func NewDailyLogger(dir, name, prefix string, chanSize int64) *FileLogger {
 	logger := &FileLogger{
-		mutex:      new(sync.Mutex),
-		dir:        dir,
-		name:       name,
-		level:      DEFAULT_LOG_LEVEL,
-		prefix:     prefix,
-		logChan:    make(chan string, chanSize),
-		fileFormat: fileFormat,
-		flag:       log.LstdFlags,
+		mutex:   new(sync.Mutex),
+		dir:     dir,
+		name:    name,
+		level:   DEFAULT_LOG_LEVEL,
+		prefix:  prefix,
+		logChan: make(chan string, chanSize),
+		flag:    log.LstdFlags,
 	}
 	logger.initLogger()
 
