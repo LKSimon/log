@@ -44,6 +44,7 @@ func (f *FileLogger) Print(v ...interface{}) {
 	f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprint(v...)
 }
 
+//格式化输出日志
 func (f *FileLogger) Printf(format string, v ...interface{}) {
 	_, file, line, _ := runtime.Caller(1)
 	f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintf(format, v...)
@@ -52,4 +53,40 @@ func (f *FileLogger) Printf(format string, v ...interface{}) {
 func (f *FileLogger) Println(v ...interface{}) {
 	_, file, line, _ := runtime.Caller(1)
 	f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintln(v...)
+}
+
+//trace日志
+func (f *FileLogger) Tracef(format string, v ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+
+	if f.level <= TRACE {
+		f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintf("\033[32m[TRACE]"+format+"\033[0m ", v...)
+	}
+}
+
+//info日志
+func (f *FileLogger) Infof(format string, v ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+
+	if f.level <= INFO {
+		f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintf("\033[1;35m[INFO]"+format+"\033[0m ", v...)
+	}
+}
+
+//warn日志
+func (f *FileLogger) Warnf(format string, v ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+
+	if f.level <= WARN {
+		f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintf("\033[1;33m[WARN]"+format+"\033[0m ", v...)
+	}
+}
+
+//error 日志
+func (f *FileLogger) Errorf(format string, v ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+
+	if f.level <= ERROR {
+		f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintf("\033[1;31m[ERROR] "+format+" \033[0m ", v...)
+	}
 }

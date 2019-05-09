@@ -132,17 +132,7 @@ func (f *FileLogger) initLoggerBySize() {
 	defer f.mutex.Unlock()
 
 	logFile := joinFilePath(f.dir, f.name) //生成日志文件绝对路径
-	/*
-		if !isExist(f.dir) { //目录不存在时：
-			os.Mkdir(f.dir, 0755)
-			f.file, _ = os.OpenFile(f.name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-			f.lg = log.New(f.file, f.prefix, f.flag)
-			fmt.Println(f.lg)
-		}
 
-		f.file, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		f.lg = log.New(f.file, f.prefix, f.flag)
-	*/
 	if false == f.isMustSplit() {
 		fmt.Println("不需要切割文件")
 		if !isExist(f.dir) { //目录不存在时：
@@ -165,20 +155,8 @@ func (f *FileLogger) initLoggerByDaily() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	if !isExist(f.dir) { //目录不存在时：
-		os.Mkdir(f.dir, 0755)
-		f.file, _ = os.OpenFile(f.name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		f.lg = log.New(f.file, f.prefix, f.flag)
-	}
-
 	logFile := joinFilePath(f.dir, f.name) //生成日志文件绝对路径
-
-	if !isExist(logFile) { //文件不存在时：
-		f.file, _ = os.OpenFile(f.name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		f.lg = log.New(f.file, f.prefix, f.flag)
-	}
-
-	if f.isMustSplit() {
+	if f.isMustSplit() {                   //f.isMustSplit()已对文件是否存在做出判断，若不存在，则返回false
 		f.split()
 	} else {
 		if !isExist(f.dir) { //文件不存在时：
