@@ -15,6 +15,7 @@ const (
 	DEFAULT_FILE_UNIT           = MB
 	DEFAULT_CHECK_FILE_INTERNAL = 1 //默认检查文件时间间隔，单位：秒
 	DEFAULT_LOG_LEVEL           = TRACE
+	DEFAULT_LOG_CHAN_SIZE       = 1000
 )
 
 const (
@@ -78,9 +79,24 @@ type FileLogger struct {
 	lg   *log.Logger
 }
 
-func NewDefaultLogger() *FileLogger {
+//默认文件切割类型为:SplitType_Size
+func NewDefaultLogger(dir, name string) *FileLogger {
+	logger := FileLogger{
+		mutex:       new(sync.Mutex),
+		dir:         dir,
+		name:        name,
+		level:       DEFAULT_LOG_LEVEL,
+		maxFileSize: (DEFAULT_FILE_SIZE * int64(DEFAULT_FILE_UNIT)),
+		prefix:      "",
+		splitType:   SplitType_Size,
+		fileFormat:  TEXT,
+		logChan:     make(chan string, DEFAULT_LOG_CHAN_SIZE),
+		flag:        log.LstdFlags,
+		count:       1,
+	}
+	logger.initLogger()
 
-	return nil
+	return &logger
 }
 
 func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT, fileFormat FORMAT) *FileLogger {
