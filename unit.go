@@ -40,3 +40,30 @@ func fileSize(name string) int64 {
 
 	return fileInfo.Size()
 }
+
+//获取文件名
+func getFileName(path string) string {
+	if "" == path {
+		return "."
+	}
+
+	fileName := filepath.Base(path)
+	name := getStringBeforeSpecificChar(fileName, '.')
+
+	return name
+}
+
+//获取string特定字符前的数据
+func getStringBeforeSpecificChar(str string, c byte) string {
+	rb := []byte{}
+	b := []byte(str)
+	for _, v := range b {
+		if v != c {
+			rb = append(rb, v)
+		} else {
+			break
+		}
+	}
+
+	return string(rb)
+}

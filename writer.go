@@ -55,6 +55,7 @@ func (f *FileLogger) Println(v ...interface{}) {
 	f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintln(v...)
 }
 
+//日志信息全部写入同一文件时，可使用Tracef、Infof、Warnf、Errorf方法
 //trace日志
 func (f *FileLogger) Tracef(format string, v ...interface{}) {
 	_, file, line, _ := runtime.Caller(1)
@@ -89,4 +90,10 @@ func (f *FileLogger) Errorf(format string, v ...interface{}) {
 	if f.level <= ERROR {
 		f.logChan <- fmt.Sprintf("%v:%v  ", file, line) + fmt.Sprintf("\033[1;31m[ERROR] "+format+" \033[0m ", v...)
 	}
+}
+
+//写入json格式日志
+
+func (f *FileLogger) Json() {
+
 }

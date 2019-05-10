@@ -15,6 +15,7 @@ const (
 	DEFAULT_CHECK_FILE_INTERNAL = 1 //默认检查文件时间间隔，单位：秒
 	DEFAULT_LOG_LEVEL           = TRACE
 	DEFAULT_LOG_CHAN_SIZE       = 1000
+	DEFAULT_FILE_FORMAT         = TEXT_FORMAT
 )
 
 const (
@@ -44,6 +45,17 @@ const (
 //定义日志层级
 type Level byte
 
+//定义json数据类型
+type JSONType map[string]interface{}
+
+//定义文件格式
+type Format byte
+
+const (
+	TEXT_FORMAT Format = iota
+	JSON_FORMAT
+)
+
 const (
 	TRACE Level = iota
 	INFO
@@ -53,46 +65,44 @@ const (
 )
 
 type FileLogger struct {
+	maxFileSize int64
+	count       int16     //默认：1,用于按照文件大小切割日志的文件后缀
+	flag        int       //默认 log.LstdFlags
+	date        time.Time //用于按照日期分割日志
+	splitType   SplitType
+	level       Level  //默认日志层级：TRACE
+	format      Format //定义文件格式
 	mutex       *sync.Mutex
+	file        *os.File
+	lg          *log.Logger
 	dir         string //日志存放目录
 	name        string //日志文件名
-	level       Level  //默认日志层级：TRACE
-	maxFileSize int64
 	prefix      string
-	splitType   SplitType
 	logChan     chan string //存放待写入日志信息
-	flag        int         //默认 log.LstdFlags
-	date        time.Time   //用于按照日期分割日志
-	count       int16       //默认：1,用于按照文件大小切割日志的文件后缀
-
-	file *os.File
-	lg   *log.Logger
 }
 
 //默认文件切割类型为:SplitType_Size
 func NewDefaultLogger(dir, name string) *FileLogger {
-	logger := FileLogger{
-		mutex:       new(sync.Mutex),
-		dir:         dir,
-		name:        name,
-		level:       DEFAULT_LOG_LEVEL,
-		maxFileSize: (DEFAULT_FILE_SIZE * int64(DEFAULT_FILE_UNIT)),
-		prefix:      "",
-		splitType:   SplitType_Size,
-		logChan:     make(chan string, DEFAULT_LOG_CHAN_SIZE),
-		flag:        log.LstdFlags,
-		count:       1,
-	}
-	logger.initLogger()
+	logger := NewSizeLogger(dir, name, "", DEFAULT_FILE_SIZE, DEFAULT_LOG_CHAN_SIZE, DEFAULT_FILE_UNIT, DEFAULT_FILE_FORMAT)
 
-	return &logger
+	return logger
 }
 
-func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT) *FileLogger {
+func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT, format Format) *FileLogger {
+	fileName := getFileName(name)
+	switch format {
+	case TEXT_FORMAT:
+		fileName = fileName + ".txt"
+	case JSON_FORMAT:
+		fileName = fileName + ".json"
+	default:
+		fileName = fileName + ".txt"
+	}
+
 	logger := FileLogger{
 		mutex:       new(sync.Mutex),
 		dir:         dir,
-		name:        name,
+		name:        fileName,
 		level:       DEFAULT_LOG_LEVEL,
 		maxFileSize: (fileSize * int64(unit)),
 		prefix:      prefix,
@@ -100,13 +110,24 @@ func NewSizeLogger(dir, name, prefix string, fileSize, chanSize int64, unit UNIT
 		logChan:     make(chan string, chanSize),
 		flag:        log.LstdFlags,
 		count:       1,
+		format:      format,
 	}
 	logger.initLogger()
 
 	return &logger
 }
 
-func NewDailyLogger(dir, name, prefix string, chanSize int64) *FileLogger {
+func NewDailyLogger(dir, name, prefix string, chanSize int64, format Format) *FileLogger {
+	fileName := getFileName(name)
+	switch format {
+	case TEXT_FORMAT:
+		fileName = fileName + ".txt"
+	case JSON_FORMAT:
+		fileName = fileName + ".json"
+	default:
+		fileName = fileName + ".txt"
+	}
+
 	logger := &FileLogger{
 		mutex:   new(sync.Mutex),
 		dir:     dir,
@@ -290,4 +311,9 @@ func (f *FileLogger) Close() error {
 	f.lg = nil
 
 	return f.file.Close()
+}
+
+//根据FileLogger文件格式生成文件名
+func (f *FileLogger) generateFileName(name string) string {
+	return ""
 }
