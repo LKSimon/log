@@ -65,7 +65,6 @@ func (f *FileLogger) logWrite() {
 			}
 		}
 	*/
-
 }
 
 //写入json格式数据

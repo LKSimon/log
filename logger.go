@@ -164,7 +164,9 @@ func (f *FileLogger) initLoggerBySize() {
 		}
 
 		f.file, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		f.lg = log.New(f.file, f.prefix, f.flag)
+		if f.format != JSON_FORMAT {
+			f.lg = log.New(f.file, f.prefix, f.flag)
+		}
 	} else {
 		f.split()
 	}
@@ -186,13 +188,14 @@ func (f *FileLogger) initLoggerByDaily() {
 		if !isExist(f.dir) { //文件不存在时：
 			os.Mkdir(f.dir, 0755)
 			f.file, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-			f.lg = log.New(f.file, f.prefix, f.flag)
+			if f.format != JSON_FORMAT {
+				f.lg = log.New(f.file, f.prefix, f.flag)
+			}
 		}
 	}
 
 	go f.logWrite()
 	go f.fileMonitor()
-
 }
 
 //判断是否分割文件
@@ -267,7 +270,9 @@ func (f *FileLogger) split() {
 			panic(err.Error())
 		} else {
 			f.file, _ = os.Create(logFile)
-			f.lg = log.New(f.file, f.prefix, f.flag)
+			if f.format != JSON_FORMAT {
+				f.lg = log.New(f.file, f.prefix, f.flag)
+			}
 		}
 	case SplitType_Daily:
 		logFileBak := fmt.Sprint(time.Now().Format(SUFFIX_FORMAT_DAILY), "_", f.name)
@@ -283,7 +288,9 @@ func (f *FileLogger) split() {
 			} else {
 				f.date, _ = time.Parse(DATE_FORMAT, time.Now().Format(DATE_FORMAT))
 				f.file, _ = os.Create(logFile)
-				f.lg = log.New(f.file, f.prefix, f.flag)
+				if f.format != JSON_FORMAT {
+					f.lg = log.New(f.file, f.prefix, f.flag)
+				}
 			}
 		}
 	}
@@ -311,9 +318,4 @@ func (f *FileLogger) Close() error {
 	f.lg = nil
 
 	return f.file.Close()
-}
-
-//根据FileLogger文件格式生成文件名
-func (f *FileLogger) generateFileName(name string) string {
-	return ""
 }
