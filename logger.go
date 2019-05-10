@@ -162,9 +162,9 @@ func (f *FileLogger) initLoggerBySize() {
 		if !isExist(f.dir) { //目录不存在时：
 			os.Mkdir(f.dir, 0755)
 		}
+
 		f.file, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 		f.lg = log.New(f.file, f.prefix, f.flag)
-
 	} else {
 		f.split()
 	}
