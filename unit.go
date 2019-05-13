@@ -35,8 +35,7 @@ func fileSize(name string) int64 {
 	if nil != err {
 		return 0
 	}
-
-	fmt.Println("文件大小为： ", fileInfo.Size())
+	//fmt.Println("文件大小为： ", fileInfo.Size())
 
 	return fileInfo.Size()
 }

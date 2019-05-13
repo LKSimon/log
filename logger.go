@@ -19,8 +19,8 @@ const (
 )
 
 const (
-	DATE_FORMAT         = "2006-01-02"
-	SUFFIX_FORMAT_DAILY = "2006-01-02" //按照每日日期切割日志的文件后缀格式
+	DATE_FORMAT         = "2006-01-02" //"2006-01-02 15:04:05"
+	SUFFIX_FORMAT_DAILY = "2006-01-02" //"2006-01-02 15:04:05"        //按照每日日期切割日志的文件后缀格式
 )
 
 //定义单位
@@ -129,13 +129,14 @@ func NewDailyLogger(dir, name, prefix string, chanSize int64, format Format) *Fi
 	}
 
 	logger := &FileLogger{
-		mutex:   new(sync.Mutex),
-		dir:     dir,
-		name:    name,
-		level:   DEFAULT_LOG_LEVEL,
-		prefix:  prefix,
-		logChan: make(chan string, chanSize),
-		flag:    log.LstdFlags,
+		mutex:     new(sync.Mutex),
+		dir:       dir,
+		name:      name,
+		level:     DEFAULT_LOG_LEVEL,
+		prefix:    prefix,
+		logChan:   make(chan string, chanSize),
+		flag:      log.LstdFlags,
+		splitType: SplitType_Daily,
 	}
 	logger.initLogger()
 
@@ -158,7 +159,7 @@ func (f *FileLogger) initLoggerBySize() {
 	logFile := joinFilePath(f.dir, f.name) //生成日志文件绝对路径
 
 	if false == f.isMustSplit() {
-		fmt.Println("不需要切割文件")
+		//fmt.Println("不需要切割文件")
 		if !isExist(f.dir) { //目录不存在时：
 			os.Mkdir(f.dir, 0755)
 		}
@@ -187,11 +188,10 @@ func (f *FileLogger) initLoggerByDaily() {
 	} else {
 		if !isExist(f.dir) { //文件不存在时：
 			os.Mkdir(f.dir, 0755)
-			f.file, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-			if f.format != JSON_FORMAT {
-				f.lg = log.New(f.file, f.prefix, f.flag)
-			}
 		}
+
+		f.file, _ = os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		f.lg = log.New(f.file, f.prefix, f.flag)
 	}
 
 	go f.logWrite()
@@ -265,8 +265,8 @@ func (f *FileLogger) split() {
 		}
 
 		if err := os.Rename(logFile, bak); nil != err {
-			fmt.Println(logFile)
-			fmt.Printf("FileLogger rename error: %v\n", err.Error())
+			//fmt.Println(logFile)
+			//fmt.Printf("FileLogger rename error: %v\n", err.Error())
 			panic(err.Error())
 		} else {
 			f.file, _ = os.Create(logFile)
@@ -277,21 +277,29 @@ func (f *FileLogger) split() {
 	case SplitType_Daily:
 		logFileBak := fmt.Sprint(time.Now().Format(SUFFIX_FORMAT_DAILY), "_", f.name)
 		bak := joinFilePath(f.dir, logFileBak)
-		if !isExist(bak) && f.isMustSplit() { //备份文件不存在且需文件分割时：
-			if nil != f.file {
-				f.file.Close()
-			}
 
-			if err := os.Rename(logFile, bak); nil != err {
-				fmt.Printf("FileLogger rename error: ", err.Error())
-				panic(err.Error())
-			} else {
-				f.date, _ = time.Parse(DATE_FORMAT, time.Now().Format(DATE_FORMAT))
-				f.file, _ = os.Create(logFile)
-				if f.format != JSON_FORMAT {
+		bak = joinFilePath(f.dir, "2019-05-13_"+f.name)
+		//fmt.Println("bak: ", bak)
+		switch isExist(bak) {
+		case false:
+			if f.isMustSplit() { //备份文件不存在且需文件分割时：
+				if nil != f.file {
+					f.file.Close()
+				}
+
+				err := os.Rename(logFile, bak)
+				if nil != err {
+					//fmt.Printf("FileLogger rename error: ", err.Error())
+					panic(err.Error())
+				} else {
+					//fmt.Println("重命名文件成功")
+					f.date, _ = time.Parse(DATE_FORMAT, time.Now().Format(DATE_FORMAT))
+					f.file, _ = os.Create(logFile)
 					f.lg = log.New(f.file, f.prefix, f.flag)
 				}
 			}
+		case true:
+			//fmt.Println("备份文件存在")
 		}
 	}
 }
@@ -306,6 +314,7 @@ func (f *FileLogger) checkFile() {
 	if f.isMustSplit() {
 		f.mutex.Lock()
 		f.split()
+		//fmt.Println("切割完成")
 		f.mutex.Unlock()
 	}
 }

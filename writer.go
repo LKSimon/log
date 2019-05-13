@@ -86,7 +86,7 @@ func (f *FileLogger) p(str string) {
 	defer f.mutex.Unlock()
 
 	if nil == f.lg {
-		fmt.Println("f.lg is nil")
+		//fmt.Println("f.lg is nil")
 	} else {
 		//fmt.Println("f.lg is not nil")
 		f.lg.Output(2, str)
