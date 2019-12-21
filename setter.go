@@ -14,21 +14,16 @@ const (
 */
 
 func (f *FileLogger) SetFlag(flag int) {
-	f.mutex.Lock()
+
 	f.flag = flag
-	f.mutex.Unlock()
 }
 
 //设置日志层级
 func (f *FileLogger) SetLevel(level Level) {
-	f.mutex.Lock()
 	f.level = level
-	f.mutex.Unlock()
 }
 
 //设置日志prefix
 func (f *FileLogger) Setprefix(prefix string) {
-	f.mutex.Lock()
 	f.prefix = prefix
-	f.mutex.Unlock()
 }
